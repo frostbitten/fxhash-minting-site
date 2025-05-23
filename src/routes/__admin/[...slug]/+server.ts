@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import fsSync from 'fs';
 import path from 'path';
 
-import { getProjectData } from '$lib/admin/fxhashDataRetrieval';
+import { getProjectData } from '$lib/fxhashDataRetrieval';
 
 import { getIpfsData } from '$lib/admin/ipfs';
 

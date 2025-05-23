@@ -2,7 +2,7 @@
     import projectConfig from '$project/config';
     import { writable } from 'svelte/store';
 
-    import { getProjectData } from './fxhashDataRetrieval';
+    import { getProjectData } from '$lib/fxhashDataRetrieval';
 
     import { fullTick } from '$lib/svelteTools';
 
