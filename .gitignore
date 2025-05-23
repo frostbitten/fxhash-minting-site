@@ -8,6 +8,10 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
+/project
+/ipfs-cache
+/deploy
+/static
 
 # OS
 .DS_Store
