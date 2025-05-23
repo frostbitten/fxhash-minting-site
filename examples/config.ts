@@ -4,24 +4,35 @@ import fxhashProject from './fxhash-project.json';
 import { processConfig } from '../src/lib/configProcessor';
 
 
-const mintReadyDateTime = new Date(fxhashProject?.mint_opens_at || '3000-01-01T00:00:00Z').getTime();
+const mintReadyDateTime = new Date(
+    fxhashProject?.mint_opens_at || 
+    '3000-01-01T00:00:00Z' // if your project isn't published yet but your know the launch date/time, you can set it here.
+).getTime(); 
 
 const projectConfig = {
-    fxhashProject,
-
-    // id: '0xF0D4c15A57ee8D7b16345c2A799df3473B6e54C7', // CLOSED. NO POST MINT EXPLORE. marcelo's "Um código simples para vidas complexas" (OPEN EDITIONS UNTIL May 9, 2025 @ 20:33)
-    // id: '0x283aA8F76496Aee03693e2e7952f0Ad62e6Ed8aE', // OPEN. ETH. 32 EDITIONS. "GuilVille: City Skyscrapers (ETH Enhanced)""
-    // id: '31724', // OPEN. OPEN EDITION. "Fifty Frames of Wave"
+    mintReadyDateTime: mintReadyDateTime,
+    fxhashProject, //don't touch this. This contains the dynamically loaded fxhash project data.
 
 
-    projectName: 'My Project',
+    /* 
+        PROEJCT ID.
+        This is the most important part of the config.
+        It needs to be wrapped in quotes so it is treated like text.
+        This can be any tezos or eth project id.
+        If your project is not yet on fxhash, keep the line commented out (keep the // at the start of the line)
+        and instead provide the project details manually below.
+    */
+    // id: '999999', 
+
+
+    projectName: 'My Project', // comment out to use the fxhash project name
     description: `
 This is a sample project description. It can be a long text that describes the project, its purpose, and any other relevant information.
 
 Use multiple lines to format the text as needed.
     `,
     
-    authors : [
+    authors : [ //you can manually define authors here. This is helpful if your project is not yet on fxhash.
         {
             name: 'Hardcoded Author',
             id: "tz1111111111111111111111111111111111",
@@ -32,8 +43,8 @@ Use multiple lines to format the text as needed.
     tagline: fxhashProject?.metadata?.description?.split('.')?.[0] || 'A sample project', // use the first sentence of the fxhash project description as the tagline
 
 
-    mintReadyDateTime: mintReadyDateTime,
-    // showCounter: false, // hide the project launch countdown if you wish.
+
+    // showCounter: false, // uncomment this line to hide the project launch countdown if you wish.
     
 }
 
