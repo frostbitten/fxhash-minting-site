@@ -23,21 +23,17 @@ Use multiple lines to format the text as needed.
     
     authors : [
         {
-            name: 'Matthew Seremet',
-            id: "tz1NoYMQaZa9Pz6Hwfx6B2x1TaGU3fSiBbW8",
-        },
-        {
             name: 'Hardcoded Author',
-            // id: "tz1111111111111111111111111111111111",
+            id: "tz1111111111111111111111111111111111",
         },
     ],
 
     // tagline: 'A sample project configuration file.',
-    tagline: fxhashProject?.metadata?.description?.split('.')?.[0] || 'A sample project',
+    tagline: fxhashProject?.metadata?.description?.split('.')?.[0] || 'A sample project', // use the first sentence of the fxhash project description as the tagline
 
 
     mintReadyDateTime: mintReadyDateTime,
-    showCounter: false,
+    // showCounter: false, // hide the project launch countdown if you wish.
     
 }
 

@@ -27,6 +27,9 @@ function copyDir(src, dest) {
 	}
 }
 
+if (!fs.existsSync(deployDir)) {
+	fs.mkdirSync(deployDir, { recursive: true });
+}
 deleteContentsExceptGit(deployDir);
 copyDir(buildDir, deployDir);
 console.log('✅ Deploy directory updated.');

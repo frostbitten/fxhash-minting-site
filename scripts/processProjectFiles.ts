@@ -14,9 +14,15 @@ export function processProjectFiles() {
     const mediaPath = path.join(projectPath, 'media');
     const previewsStaticPath = path.join(staticPath, 'previews');
 
-    //create previews folder if it doesn't exist
+    //create previews and media folders if they don't exist
     if (!fsSync.existsSync(previewsStaticPath)) {
         fsSync.mkdirSync(previewsStaticPath, { recursive: true });
+    }
+    if (!fsSync.existsSync(previewsPath)) {
+        fsSync.mkdirSync(previewsPath, { recursive: true });
+    }
+    if (!fsSync.existsSync(mediaPath)) {
+        fsSync.mkdirSync(mediaPath, { recursive: true });
     }
 
     //get all the previews

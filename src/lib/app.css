@@ -10,13 +10,18 @@ html, body {
 }
 nav {
   @apply bg-text text-background;
-  @apply md:hidden;
+  /* @apply md:hidden; */
   a {
     @apply text-background;
+    text-decoration: none;
   }
   button, .button {
     @apply bg-background text-text;
   }
+  ul {
+    @apply list-none;
+  }
+
 }
 
 body {
@@ -106,6 +111,23 @@ img {
         }
     }
 }
+
+.icon-blank-avatar {
+  position: relative;
+  overflow: hidden;
+}
+.icon-blank-avatar::before {
+	content: "";
+	display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+	background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23231f20" d="M96.63,100c0-18.51-20.88-33.51-46.63-33.51S3.37,81.49,3.37,100"/><circle fill="%23231f20" cx="50" cy="37.5" r="23.76"/></svg>') no-repeat center/contain;
+}
+
     
 .authors {
     @apply m-1 my-4 md:m-4;
@@ -127,7 +149,7 @@ img {
                 @apply w-8 h-8 rounded-full mr-2 inline-block bg-gray-200;
             }
             a {
-                @apply text-background;
+                @apply text-background flex flex-row items-center;
                 text-decoration: none;
             }
         }
@@ -149,9 +171,14 @@ img {
             text-decoration: none;
         }
       .author-picture {
+          @apply w-full;
           /* @apply w-16 h-16 rounded-full mx-auto mb-2; */
-          img {
+          img, .img-placeholder {
               @apply w-full h-full rounded-full;
+          }
+          .img-placeholder {
+              @apply h-42 w-full;
+              border-radius: 0;
           }
       }
       .author-name {

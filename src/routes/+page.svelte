@@ -327,7 +327,7 @@
         {#if projectConfig.fxhashProject?.coverReady}
             <img src='media/cover' alt="Cover image" class="cover-image" />
         {:else}
-            <div class="bg-gray-200 w-full h-64 mb-8 cover-image placeholder"></div>
+            <!-- <div class="bg-gray-200 w-full h-64 mb-8 cover-image placeholder"></div> -->
         {/if}
     {/if}
 	<h1 class="project-title mb-4">{projectConfig.menuTitle || projectConfig.siteTitle || projectConfig.projectName || projectConfig.fxhashProject.name}</h1>
@@ -349,9 +349,9 @@
                         {#if author.picture_ready}
                             <img src="{author.pictureUri}" alt="Author: {author.name || author.username}" class="" />
                         {:else}
-                            <div class="img-placeholder"></div>
+                            <div class="img-placeholder icon-blank-avatar"></div>
                         {/if}
-                        {author?.name || author.username}
+                        <span class="author-name">{author?.name || author.username}</span>
                     </a>
                 </li>
             {/each}
@@ -393,7 +393,7 @@
                     {#if author.picture_ready}
                         <img src="{author.pictureUri}" alt="Author: {author.name}" class="" />
                     {:else}
-                        <div class="img-placeholder"></div>
+                        <div class="img-placeholder icon-blank-avatar"></div>
                     {/if}
                 </div>
                 <div class="author-name">
