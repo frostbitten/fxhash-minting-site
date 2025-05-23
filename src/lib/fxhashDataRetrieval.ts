@@ -53,7 +53,7 @@ query ObjktBySlug($where: objkt_bool_exp = {}) {
 }
 
 
-export async function getProjectData({projectId}) {
+export async function getProjectData({projectId = null, slug = null}) {
     const query = `
 query ProjectData($where: generative_token_bool_exp) {
   onchain {
@@ -230,10 +230,14 @@ query ProjectData($where: generative_token_bool_exp) {
 
 `;
     const variables = {
-        where: {
-            id: { _eq: String(projectId) }
-        }
+        where: {}
     };
+    if(projectId){
+        variables.where.id = { _eq: String(projectId) };
+    }
+    if(slug){
+        variables.where.slug = { _eq: slug };
+    }
     const response = await fetch(graphUrl, {
         method: 'POST',
         headers: {

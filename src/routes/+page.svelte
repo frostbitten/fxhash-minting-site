@@ -11,7 +11,7 @@
 
     import { getProjectData, getObjktBySlug } from '$lib/fxhashDataRetrieval';
 
-    import MintButton from '$lib/components/MintButton.svelte';
+    // import { processConfig } from '$lib/configProcessor';
 
 	import components from '$lib/projectComponents';
 
@@ -23,12 +23,14 @@
     // import Home from '$project/Home.svelte';
     import projectConfig from '$project/config';
     import { fullTick } from '$lib/svelteTools.js';
-    const projectId = projectConfig?.id;
+    const projectId = writable(projectConfig?.id);
     const previews = projectConfig.previews;
 
     console.log('projectConfig', {projectConfig});
 
     const objkts = writable([]);
+
+    console.log('objkts', {$objkts});
 
     const mintPrice = writable({
         fee_currency: null,
@@ -78,6 +80,10 @@
 
     const doMint = async () => {
         if($minting) return;
+        if(!$projectId) {
+            throw new Error('Project ID is not set');
+
+        }
         $userCancelledWalletConnect = false;
         $mintError = '';
         $minting = true;
@@ -100,9 +106,9 @@
 
         const version = projectConfig.fxhashProject?.version;
 
-        console.log('minting', {projectId, $walletStore});
+        console.log('minting', {$projectId, $walletStore});
         try {
-            const mintOp = await handleTezosMint(projectId, version, $mintPrice.price, {id: $mintPrice.id});
+            const mintOp = await handleTezosMint($projectId, version, $mintPrice.price, {id: $mintPrice.id});
             console.log('mintOp', {mintOp});
             $mintedIteration = getIterationIdFromOperation(mintOp);
             
@@ -127,8 +133,35 @@
         return a.iteration - b.iteration;
     }
 
+    let generativeIpfsHash = '';
+
+    function updatePricing(){
+
+        const pricingFixed = projectConfig.fxhashProject?.pricing_fixeds;
+        if(pricingFixed && pricingFixed.length > 0) {
+            const mintPriceData = pricingFixed[0];
+            mintPrice.set(mintPriceData);
+        }
+    }
+
     onMount(async () => {
 
+
+        const hash = window.location.hash;
+        console.log('hash', {hash});
+
+        if(hash && hash.startsWith('#slug:')) {
+            const slug = hash.split('#slug:')[1];
+            console.log('slug', {slug});
+            const projectData = await getProjectData({slug:slug});
+            console.log('projectData', {projectData});
+            if(projectData) {
+                // projectConfig.fxhashProject = projectData;
+                // projectConfig.reprocess();
+                $projectId = projectData.id;
+                loadProjectData();
+            }
+        }
 
         // const objktTest = await getObjktBySlug({slug:`${projectConfig.fxhashProject?.slug}-${projectConfig.fxhashProject?.iterations_count}`});
         // console.log('objktTest getObjktBySlug', {objktTest});
@@ -142,19 +175,14 @@
         }
 
 
-        let generativeIpfsHash;
         if(projectConfig.fxhashProject?.generative_uri){
             generativeIpfsHash = projectConfig.fxhashProject?.generative_uri.split('://')[1];
         }
 
         console.log({projectConfig});
 
-        const pricingFixed = projectConfig.fxhashProject?.pricing_fixeds;
-        if(pricingFixed && pricingFixed.length > 0) {
-            const mintPriceData = pricingFixed[0];
-            mintPrice.set(mintPriceData);
-        }
-        
+        updatePricing();
+
         let mintCounterInterval;
         if(!projectConfig.mintReady){
             mintCounterInterval = setInterval(() => {
@@ -180,60 +208,6 @@
                     seconds
                 }
             }, 200);
-        }
-        
-        async function refreshProjectData() {
-            if(!projectId) return;
-            console.log('refreshProjectData called', {projectId});
-            const freshProjectData = await getProjectData({projectId});
-
-            console.log('freshProjectData', {freshProjectData});
-
-
-            //merge various data
-            ['iterations_count'].forEach(key => {
-                if(freshProjectData[key] !== undefined) {
-                    projectConfig.fxhashProject[key] = freshProjectData[key];
-                }
-            });
-            
-            //merge new objkts with existing ones
-            const newObjkts = freshProjectData?.objkts || [];
-            const _objkts = $objkts;
-            for(let i = 0; i < newObjkts.length; i++) {
-                const newObjkt = newObjkts[i];
-                const existingObjktIndex = _objkts.findIndex(o => o.id === newObjkt.id);
-                const isNew = existingObjktIndex === -1;
-                const objkt = isNew ? newObjkt : _objkts[existingObjktIndex];
-
-                if(isNew){
-                    objkt.dynamically_loaded = true;
-                    _objkts.push(objkt);
-                }
-
-                const lastDisplayUri = _objkts?.[existingObjktIndex]?.display_uri;
-                objkt.display_uri = newObjkt.display_uri;
-                objkt.display_uri_https = `https://gateway.fxhash2.xyz/ipfs/` + objkt.display_uri.split('://')[1];
-                objkt.liveView_uri = `https://gateway.fxhash2.xyz/ipfs/${generativeIpfsHash}/?cid=${generativeIpfsHash}&fxhash=${objkt.generation_hash}&fxminter=${objkt.minter.id}&fxiteration=${objkt.iteration}&fxcontext=standalone&fxchain=TEZOS`
-
-                if(lastDisplayUri !== objkt.display_uri) {
-                    objkt.dynamically_loaded = true;
-                    objkt.hidden = true;
-                    setTimeout(() => {
-                        objkt.hidden = false;
-                        $objkts = $objkts;
-                    }, 1000);
-                }
-            }
-            _objkts.sort(objktsSort);
-
-            //look for current $mintedIteration if applicable
-            if($mintedIteration) {
-                const mintedObjktIndex = _objkts.findIndex(o => Number(o.iteration) === Number($mintedIteration));
-                $mintedObjkt = _objkts[mintedObjktIndex];
-            }
-
-            objkts.set(_objkts);
         }
         
         refreshProjectData();
@@ -297,6 +271,73 @@
     });
 
     
+        
+    async function refreshProjectData(overwrite = false) {
+        if(!$projectId) return;
+        console.log('refreshProjectData called', {$projectId});
+        const freshProjectData = await getProjectData({projectId:$projectId});
+
+        if(overwrite) {
+            projectConfig.fxhashProject = freshProjectData;
+            projectConfig.reprocess();
+            console.log('projectConfig updated', {projectConfig});
+        }
+
+        console.log('freshProjectData', {freshProjectData});
+
+        //merge various data
+        ['iterations_count','pricing_fixeds'].forEach(key => {
+            if(freshProjectData?.[key] !== undefined) {
+                projectConfig.fxhashProject[key] = freshProjectData[key];
+            }
+        });
+
+        updatePricing();
+        
+        //merge new objkts with existing ones
+        const newObjkts = freshProjectData?.objkts || [];
+        const _objkts = $objkts;
+        for(let i = 0; i < newObjkts.length; i++) {
+            const newObjkt = newObjkts[i];
+            const existingObjktIndex = _objkts.findIndex(o => o.id === newObjkt.id);
+            const isNew = existingObjktIndex === -1;
+            const objkt = isNew ? newObjkt : _objkts[existingObjktIndex];
+
+            if(isNew){
+                objkt.dynamically_loaded = true;
+                _objkts.push(objkt);
+            }
+
+            const lastDisplayUri = _objkts?.[existingObjktIndex]?.display_uri;
+            objkt.display_uri = newObjkt.display_uri;
+            objkt.display_uri_https = `https://gateway.fxhash2.xyz/ipfs/` + objkt.display_uri.split('://')[1];
+            objkt.liveView_uri = `https://gateway.fxhash2.xyz/ipfs/${generativeIpfsHash}/?cid=${generativeIpfsHash}&fxhash=${objkt.generation_hash}&fxminter=${objkt.minter.id}&fxiteration=${objkt.iteration}&fxcontext=standalone&fxchain=TEZOS`
+
+            if(lastDisplayUri !== objkt.display_uri) {
+                objkt.dynamically_loaded = true;
+                objkt.hidden = true;
+                setTimeout(() => {
+                    objkt.hidden = false;
+                    $objkts = $objkts;
+                }, 1000);
+            }
+        }
+        _objkts.sort(objktsSort);
+
+        //look for current $mintedIteration if applicable
+        if($mintedIteration) {
+            const mintedObjktIndex = _objkts.findIndex(o => Number(o.iteration) === Number($mintedIteration));
+            $mintedObjkt = _objkts[mintedObjktIndex];
+        }
+
+        objkts.set(_objkts);
+
+    }
+        
+    async function loadProjectData() {
+        await refreshProjectData(true);
+    }
+
 
 
     function getIterationIdFromOperation(mintOp) {
@@ -304,7 +345,7 @@
         let iterationId;
         for(let param of gentk_v3_operation.parameters.value) {
             for(let arg of param.args){
-                if(arg?.args?.[0]?.int === String(projectId)) {
+                if(arg?.args?.[0]?.int === String($projectId)) {
                     iterationId = arg.args[1].int;
                     break;
                 }
@@ -321,13 +362,19 @@
 </style>
 
 <section id="hero" class="py-10 text-center">
+    {#if projectConfig?.demo && !projectConfig?.fxhashProject?.id}
+        <div class="demo">
+            <input type="text" placeholder="Enter your project id" bind:value={$projectId} class="demo-input" name="project-id"/>
+            <button on:click={loadProjectData} class="demo-button">Load</button>
+        </div>
+    {/if}
     {#if components.Hero}
         <svelte:component this={components.Hero} />
     {:else}
         {#if projectConfig.fxhashProject?.coverReady}
             <img src='media/cover' alt="Cover image" class="cover-image" />
-        {:else}
-            <!-- <div class="bg-gray-200 w-full h-64 mb-8 cover-image placeholder"></div> -->
+        {:else if projectConfig.demo && projectConfig?.cover_display_uri_https}
+            <img src={projectConfig?.cover_display_uri_https} alt="Cover image" class="cover-image" />
         {/if}
     {/if}
 	<h1 class="project-title mb-4">{projectConfig.menuTitle || projectConfig.siteTitle || projectConfig.projectName || projectConfig.fxhashProject.name}</h1>
@@ -348,6 +395,8 @@
                 <li><a href="#authors">
                         {#if author.picture_ready}
                             <img src="{author.pictureUri}" alt="Author: {author.name || author.username}" class="" />
+                        {:else if author.pictureUriHttps}
+                            <img src="{author.pictureUriHttps}" alt="Author: {author.name || author.username}" class="" />
                         {:else}
                             <div class="img-placeholder icon-blank-avatar"></div>
                         {/if}
@@ -392,6 +441,8 @@
                 <div class="author-picture">
                     {#if author.picture_ready}
                         <img src="{author.pictureUri}" alt="Author: {author.name}" class="" />
+                    {:else if author.pictureUriHttps}
+                        <img src="{author.pictureUriHttps}" alt="Author: {author.name}" class="" />
                     {:else}
                         <div class="img-placeholder icon-blank-avatar"></div>
                     {/if}

@@ -95,7 +95,7 @@ function buildQuery(action: string, arg: string) {
 
                     
 
-                    
+                    //process the authors into a consistent location and format
 
                     const authors = [];
 
