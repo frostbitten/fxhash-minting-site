@@ -61,8 +61,13 @@ export function processConfig(config) {
     if(config.fxhashProject?.mint_opens_at){
         config.mintReadyDateTime = new Date(config.fxhashProject?.mint_opens_at).getTime(); 
     }
+
+    if(config.fxhashProject?.open_editions_ends_at){
+        config.mintCloseDateTime = new Date(config.fxhashProject?.open_editions_ends_at).getTime(); 
+    }
     
     config.mintReady = Date.now() > config.mintReadyDateTime;
+    config.mintClosed = Date.now() > config.mintCloseDateTime;
 
     config.reprocess = () => {
         processConfig(config);

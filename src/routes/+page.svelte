@@ -51,6 +51,8 @@
 
     const minting = writable(false);
 
+    const mintingFinished = writable(false);
+
     // Handle connect button click
     async function handleConnect() {
         if (!browser) return;
@@ -410,9 +412,17 @@
 
     <div class="mt-8">
         {#if projectConfig.mintReady}
-            <a href="#mint" class="button">Mint Now @ {$mintPrice.price / 1e6} ꜩ</a>
-            {#if projectConfig.fxhashProject?.iterations_count !== '0'}
-                <div class="mint-count"> <span class="number">{projectConfig.fxhashProject?.iterations_count}</span> minted so far!</div>
+            {#if projectConfig.mintClosed}
+                <div class="mb-8"><h2>Minting is closed</h2></div>
+                <a href="#explore" class="button">Explore</a>
+                {#if projectConfig.fxhashProject?.iterations_count !== '0'}
+                    <div class="mint-count"> <span class="number">{projectConfig.fxhashProject?.iterations_count}</span> minted total</div>
+                {/if}
+            {:else}
+                <a href="#mint" class="button">Mint Now @ {$mintPrice.price / 1e6} ꜩ</a>
+                {#if projectConfig.fxhashProject?.iterations_count !== '0'}
+                    <div class="mint-count"> <span class="number">{projectConfig.fxhashProject?.iterations_count}</span> minted so far!</div>
+                {/if}
             {/if}
         {:else}
             <a href="#mint" class="button">Mint soon!</a><br>
@@ -495,7 +505,16 @@
     </section>
 {/if}
 
-{#if projectConfig.mintReady}
+{#if projectConfig.mintClosed}
+    <section id="mint" class="py-16 border-t text-center">
+        <h2 class="text-2xl font-bold mb-6">Minting is closed</h2>
+        {#if projectConfig.fxhashProject?.iterations_count !== '0'}
+            <div class="mint-count"> <span class="number">{projectConfig.fxhashProject?.iterations_count}</span> minted total</div>
+        {/if}
+    </section>
+{/if}
+
+{#if projectConfig.mintReady && !projectConfig.mintClosed}
 <section id="mint" class="py-16 border-t text-center">
 	<h2 class="text-2xl font-bold mb-6">Mint Yours</h2>
 
@@ -566,9 +585,9 @@
 			<div class="aspect-square rounded" aria-label={`Minted ${i + 1}`}>
                 {#if !objkt?.hidden}
                     {#if objkt?.dynamically_loaded}
-                        <img src={objkt?.display_uri_https} alt={`Minted ${objkt.iteration}`} class="w-full h-full object-cover rounded" />
+                        <img src={objkt?.display_uri_https} alt={`Minted ${objkt.iteration}`} class="w-full h-full object-contain rounded" />
                     {:else}
-                        <img src={'media/display_uri_' + objkt?.id} alt={`Minted ${objkt.iteration}`} class="w-full h-full object-cover rounded" />
+                        <img src={'media/display_uri_' + objkt?.id} alt={`Minted ${objkt.iteration}`} class="w-full h-full object-contain rounded" />
                     {/if}
                 {:else}
                     <!-- hidden debug -->
