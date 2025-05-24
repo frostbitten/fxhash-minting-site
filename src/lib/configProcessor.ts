@@ -65,9 +65,17 @@ export function processConfig(config) {
     if(config.fxhashProject?.open_editions_ends_at){
         config.mintCloseDateTime = new Date(config.fxhashProject?.open_editions_ends_at).getTime(); 
     }
-    
+
     config.mintReady = Date.now() > config.mintReadyDateTime;
     config.mintClosed = Date.now() > config.mintCloseDateTime;
+
+    if(!config.fxhashProject?.open_editions){
+        //not an open edition. normal limited supply
+        if(config.fxhashProject?.iterations_count && config.fxhashProject?.supply){
+            config.mintClosed = Number(config.fxhashProject?.supply) === Number(config.fxhashProject?.iterations_count);
+        }
+    }
+    
 
     config.reprocess = () => {
         processConfig(config);

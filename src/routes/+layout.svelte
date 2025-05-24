@@ -57,14 +57,14 @@
 		<div class="container mx-auto flex items-center justify-between p-4">
 			<a href="/" class="text-xl font-bold">{projectConfig.menuTitle || projectConfig.siteTitle || projectConfig.projectName}</a>
 			<ul class="hidden md:flex gap-6">
-				{#if projectConfig.mintReady}
+				<!-- {#if projectConfig.mintReady}
 					<li><a href="#mint">Mint now</a></li>
 				{:else}
 					<li><a href="#mint" class="">Mint soon!</a></li>
 				{/if}
 				{#if projectConfig.mintReady}
 					<li><a href="#explore">Explore mints</a></li>
-				{/if}
+				{/if} -->
 				{#if $AdminPanel}
 					<li><a href="#admin" onclick={openAdminPanel}>Admin</a></li>
 				{/if}
@@ -79,11 +79,11 @@
 	{#if $mobileOpen}
 		<nav class="md:hidden border-t">
 			<ul class="flex flex-col gap-4 p-4">
-				<li><a href="#mint" class="block" onclick={() => $mobileOpen = false}>Mint now</a></li>
+				<!-- <li><a href="#mint" class="block" onclick={() => $mobileOpen = false}>Mint now</a></li>
 				<li><a href="#explore" class="block" onclick={() => $mobileOpen = false}>Explore mints</a></li>
 				{#if !$walletStore.connected}
 					<li><a href="#connect" class="block" onclick={() => $mobileOpen = false}>Connect wallet</a></li>
-				{/if}
+				{/if} -->
 				{#if $AdminPanel}
 					<li><a href="#admin" onclick={()=> {openAdminPanel(); closeMobile()} }>Admin</a></li>
 				{/if}
