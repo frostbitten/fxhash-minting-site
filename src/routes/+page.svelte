@@ -44,7 +44,7 @@
     const mintCountdownStats = writable({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
     const mintedIteration = writable(null);
-    // const mintedIteration = writable(26); //test
+    // const mintedIteration = writable(8); //test
     const mintedObjkt = writable(null);
 
     const disconnectConfirmation = writable(false);
@@ -85,6 +85,9 @@
         if(!$projectId) {
             throw new Error('Project ID is not set');
 
+        }
+        if(!$generativeHash) {
+            throw new Error('Generative hash is not set');
         }
         $userCancelledWalletConnect = false;
         $mintError = '';
@@ -135,7 +138,9 @@
         return a.iteration - b.iteration;
     }
 
-    let generativeIpfsHash = '';
+    const generative_uri = writable(''); // https://onchfs.fxhash2.xyz/4b0c90084dde3b0019c0da5d5ea65b7dd38675a1fd20cf71b51ae2a1a5516a24/?cid=onchfs%3A%2F%2F4b0c90084dde3b0019c0da5d5ea65b7dd38675a1fd20cf71b51ae2a1a5516a24&fxhash=opFH64BsZ7HVmvjVaXNFag6LDyKWTiocbZkL7Sp8mGh62kgF6Gs&fxminter=tz1NoYMQaZa9Pz6Hwfx6B2x1TaGU3fSiBbW8&fxiteration=8&fxcontext=standalone&fxchain=TEZOS
+    const generative_uri_scheme = writable(''); // onchfs
+    const generativeHash = writable('');
 
     function updatePricing(){
 
@@ -178,7 +183,11 @@
 
 
         if(projectConfig.fxhashProject?.generative_uri){
-            generativeIpfsHash = projectConfig.fxhashProject?.generative_uri.split('://')[1];
+            $generative_uri = projectConfig.fxhashProject.generative_uri;
+            const generativeUriParts = $generative_uri.split('://');
+            $generativeHash = generativeUriParts[1];
+            $generative_uri_scheme = generativeUriParts[0];
+
         }
 
         console.log({projectConfig});
@@ -254,8 +263,16 @@
             const existingObject = $objkts.find(o => String(o.iteration) === String(iteration));
             if(!existingObject) {
                 objkt.dynamically_loaded = true;
+
                 objkt.display_uri_https = `https://gateway.fxhash2.xyz/ipfs/` + objkt.display_uri.split('://')[1];
-                objkt.liveView_uri = `https://gateway.fxhash2.xyz/ipfs/${generativeIpfsHash}/?cid=${generativeIpfsHash}&fxhash=${objkt.generation_hash}&fxminter=${objkt.minter.id}&fxiteration=${objkt.iteration}&fxcontext=standalone&fxchain=TEZOS`
+
+                if($generative_uri_scheme === 'onchfs') {
+                    objkt.liveView_uri = `https://onchfs.fxhash2.xyz/${$generativeHash}/?cid=onchfs%3A%2F%2F${$generativeHash}&fxhash=${objkt.generation_hash}&fxminter=${objkt.minter.id}&fxiteration=${objkt.iteration}&fxcontext=standalone&fxchain=TEZOS`
+                } else if($generative_uri_scheme === 'ipfs') {
+                    objkt.liveView_uri = `https://gateway.fxhash2.xyz/ipfs/${$generativeHash}/?cid=${$generativeHash}&fxhash=${objkt.generation_hash}&fxminter=${objkt.minter.id}&fxiteration=${objkt.iteration}&fxcontext=standalone&fxchain=TEZOS`
+                } else {
+                    throw new Error('Unknown generative_uri_scheme: ' + $generative_uri_scheme);
+                }
                 $objkts.push(objkt);
                 $objkts.sort(objktsSort);
                 objkts.set($objkts);
@@ -283,6 +300,13 @@
             projectConfig.fxhashProject = freshProjectData;
             projectConfig.reprocess();
             console.log('projectConfig updated', {projectConfig});
+        }
+
+        if(projectConfig.fxhashProject?.generative_uri){
+            $generative_uri = projectConfig.fxhashProject.generative_uri;
+            const generativeUriParts = $generative_uri.split('://');
+            $generativeHash = generativeUriParts[1];
+            $generative_uri_scheme = generativeUriParts[0];
         }
 
         console.log('freshProjectData', {freshProjectData});
@@ -313,7 +337,16 @@
             const lastDisplayUri = _objkts?.[existingObjktIndex]?.display_uri;
             objkt.display_uri = newObjkt.display_uri;
             objkt.display_uri_https = `https://gateway.fxhash2.xyz/ipfs/` + objkt.display_uri.split('://')[1];
-            objkt.liveView_uri = `https://gateway.fxhash2.xyz/ipfs/${generativeIpfsHash}/?cid=${generativeIpfsHash}&fxhash=${objkt.generation_hash}&fxminter=${objkt.minter.id}&fxiteration=${objkt.iteration}&fxcontext=standalone&fxchain=TEZOS`
+            
+            
+            if($generative_uri_scheme === 'onchfs') {
+                objkt.liveView_uri = `https://onchfs.fxhash2.xyz/${$generativeHash}/?cid=onchfs%3A%2F%2F${$generativeHash}&fxhash=${objkt.generation_hash}&fxminter=${objkt.minter.id}&fxiteration=${objkt.iteration}&fxcontext=standalone&fxchain=TEZOS`
+            } else if($generative_uri_scheme === 'ipfs') {
+                objkt.liveView_uri = `https://gateway.fxhash2.xyz/ipfs/${$generativeHash}/?cid=${$generativeHash}&fxhash=${objkt.generation_hash}&fxminter=${objkt.minter.id}&fxiteration=${objkt.iteration}&fxcontext=standalone&fxchain=TEZOS`
+            } else {
+                throw new Error('Unknown generative_uri_scheme: ' + $generative_uri_scheme);
+            }
+
 
             if(lastDisplayUri !== objkt.display_uri) {
                 objkt.dynamically_loaded = true;
@@ -536,7 +569,8 @@
             {#if $mintedObjkt && $mintedObjkt.liveView_uri}
                 <div>Minted successfully! Your iteration ID is: <strong>{$mintedIteration}</strong></div>
                 <a href={`https://www.fxhash.xyz/iteration/${projectConfig.fxhashProject.slug}-${$mintedIteration}`} target="_blank" rel="noopener noreferrer">View your mint on fxhash ↗</a>
-                <iframe src={$mintedObjkt.liveView_uri} class="live-mint" allowfullscreen></iframe>
+                <iframe src={$mintedObjkt.liveView_uri} class="live-mint" title="Live mint" allowfullscreen allow="accelerometer *; camera *; gyroscope *; microphone *; xr-spatial-tracking *" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
+                
             {:else}
                 <div class="mint-processing">
                     <h3>Mint successful!</h3>
