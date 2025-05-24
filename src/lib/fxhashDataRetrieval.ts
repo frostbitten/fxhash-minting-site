@@ -205,6 +205,8 @@ query ProjectData($where: generative_token_bool_exp) {
         amount
         method
         data
+        id
+        merkle_root
       }
       redeemed_percentage
       pricing_fixeds {

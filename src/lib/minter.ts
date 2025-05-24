@@ -1,6 +1,33 @@
 
 import { walletStore, getTezosWalletService } from '$lib/services/wallet';
 import { writable, get } from 'svelte/store';
+import { packDataBytes } from "@taquito/michel-codec"
+
+
+function getReserveMethodBytes(method){
+
+    if(method===0){
+        const type = {
+            prim: "pair",
+            args: [
+                { prim: "nat" },
+                { prim: "nat" }
+            ]
+        }
+
+        const value = {
+            prim: "Pair",
+            args: [
+                { prim: "None" },
+                { int: "0" }
+            ]
+        }
+
+        const packed = packDataBytes(value, type)
+        return packed;
+    }
+}
+
 const fxhashContractAddresses = {
     "V2": "KT1BJC12dG17CVvPKJ1VYaNnaT5mzfnUTwXv",
     "V3": "KT1Xpmp15KfqoePNW9HczFmqaGNHwadV2a3b",
@@ -71,7 +98,13 @@ export async function handleTezosMint(projectId, version, amount, data = {}) {
             const issuerId = projectIdNum;
             const recipient = data.recipient || null;
             const referrer = data.referrer || null;
-            const reserveInput = data.reserve_input || null;
+
+            let reserveInput = data.reserve_input || null;
+
+            if(data?.reserve){
+                reserveInput = getReserveMethodBytes(data?.reserve.method)?.bytes;
+                console.log('reserveInput', {data, reserveInput});
+            }
                 
             op = await contract.methodsObject.mint({
                 create_ticket: createTicket ? { bytes: createTicket.replace(/^0x/, '') } : null,

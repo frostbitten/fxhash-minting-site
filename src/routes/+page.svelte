@@ -23,6 +23,13 @@
     // import Home from '$project/Home.svelte';
     import projectConfig from '$project/config';
     import { fullTick } from '$lib/svelteTools.js';
+
+
+
+
+
+
+
     const projectId = writable(projectConfig?.id);
     const previews = projectConfig.previews;
 
@@ -80,7 +87,7 @@
     const mintError = writable('');
     const checkMintedIteration = writable(false);
 
-    const doMint = async () => {
+    const doMint = async ({reserve=null}) => {
         if($minting) return;
         if(!$projectId) {
             throw new Error('Project ID is not set');
@@ -113,7 +120,10 @@
 
         console.log('minting', {$projectId, $walletStore});
         try {
-            const mintOp = await handleTezosMint($projectId, version, $mintPrice.price, {id: $mintPrice.id});
+            const mintOp = await handleTezosMint($projectId, version, $mintPrice.price, {
+                id: $mintPrice.id,
+                reserve,
+            });
             console.log('mintOp', {mintOp});
             $mintedIteration = getIterationIdFromOperation(mintOp);
             
@@ -296,7 +306,7 @@
         console.log('refreshProjectData called', {$projectId});
         const freshProjectData = await getProjectData({projectId:$projectId});
 
-        if(overwrite) {
+        if(overwrite || projectConfig?.demo) {
             projectConfig.fxhashProject = freshProjectData;
             projectConfig.reprocess();
             console.log('projectConfig updated', {projectConfig});
@@ -551,10 +561,40 @@
 <section id="mint" class="py-16 border-t text-center">
 	<h2 class="text-2xl font-bold mb-6">Mint Yours</h2>
 
+    {#if !$walletStore.connected}
+        <div class="connect-wallet my-4">
+            <button class="px-8 py-3 rounded" on:click={handleConnect}>Connect Wallet</button>
+            {#if projectConfig.fxhashProject?.reserves.length > 0}
+                <p>Connect your wallet to check your reserve</p>
+            {:else}
+                <p>Connect your wallet to mint</p>
+            {/if}
+        </div>
+    {/if}
+
     <div class="mint-box mb-8">
         <p class="mb-4">Price: <strong>{$mintPrice.price / 1e6} ꜩ</strong></p>
         {#if !$minting}
-            <button class="px-8 py-3 rounded" on:click={doMint}>Mint now </button>
+            <div class="mint-buttons">
+                
+                <button class="px-8 py-3 rounded" on:click={doMint}>Mint now</button>
+
+
+                {#each projectConfig.fxhashProject?.reserves as reserve}
+                    {#if reserve?.data?.[$walletStore.userAddress]}
+                        <div class="reserve-info">
+                            <p>Reserved for you: <strong>{reserve.data[$walletStore.userAddress]}</strong></p>
+                            <button class="px-8 py-3 rounded" on:click={() => doMint({reserve})}>Mint from Reserve</button>
+                        </div>
+                    {/if}
+                {/each}
+
+                <a href={`https://www.fxhash.xyz/project/${projectConfig.fxhashProject.slug}`} target="_blank" rel="noopener noreferrer" class="button px-8 py-3 rounded">
+                    Mint with credit card (on fxhash) ↗
+                </a>
+
+            </div>
+
         {:else}
             <button class="px-8 py-3 rounded" disabled>Minting...</button>
         {/if}
@@ -619,9 +659,9 @@
 			<div class="aspect-square rounded" aria-label={`Minted ${i + 1}`}>
                 {#if !objkt?.hidden}
                     {#if objkt?.dynamically_loaded}
-                        <img src={objkt?.display_uri_https} alt={`Minted ${objkt.iteration}`} class="w-full h-full object-contain rounded" />
+                        <img src={objkt?.display_uri_https} alt={`Minted ${objkt.iteration}`} class="w-full h-full object-contain rounded" loading="lazy" />
                     {:else}
-                        <img src={'media/display_uri_' + objkt?.id} alt={`Minted ${objkt.iteration}`} class="w-full h-full object-contain rounded" />
+                        <img src={'media/display_uri_' + objkt?.id} alt={`Minted ${objkt.iteration}`} class="w-full h-full object-contain rounded"  loading="lazy"/>
                     {/if}
                 {:else}
                     <!-- hidden debug -->

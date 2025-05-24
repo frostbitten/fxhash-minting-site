@@ -271,3 +271,17 @@ button.disconnect {
     background-position: 0% 0%;
   }
 }
+
+.connect-wallet {
+  @apply flex flex-col items-center justify-center;
+  @apply gap-4;
+  @apply my-8;
+  @apply text-center;
+}
+
+.mint-buttons {
+  @apply flex flex-col items-center justify-center;
+  @apply gap-4;
+  @apply my-8;
+  @apply text-center;
+}
